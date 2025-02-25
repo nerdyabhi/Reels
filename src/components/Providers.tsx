@@ -1,10 +1,16 @@
+
+"use client"
 import React from "react";
 import { ImageKitProvider } from "imagekitio-next";
 import { SessionProvider } from "next-auth/react";
 
 const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT;
 const publicKey = process.env.NEXT_PUBLIC_PUBLIC_KEY;
+
 export default function Providers({ children }: { children: React.ReactNode }) {
+    console.log("URL Endpoint:", process.env.NEXT_PUBLIC_URL_ENDPOINT);
+    console.log("Public Key:", process.env.NEXT_PUBLIC_PUBLIC_KEY);
+
     const authenticator = async () => {
         try {
             const response = await fetch("api/imagekit-auth");
@@ -21,7 +27,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             throw new Error(`Authentication request failed: ${error?.message}`);
         }
     };
- 
+
     return (
         <SessionProvider>
             <ImageKitProvider urlEndpoint={urlEndpoint}
