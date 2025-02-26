@@ -30,6 +30,45 @@ export default function FileUpload({ onSuccess, onProgress, fileType = "image" }
         console.log("Success", response);
         setUploading(false);
         setError(null);
+        (async () => {
+            try {
+                // Generate thumbnail URL for videos
+                let thumbnailUrl = '';
+                if (fileType === 'video' && response.url) {
+                    thumbnailUrl = `${response.url}?tr=f-auto,q-50,w-300`;
+                }
+
+
+                const res = await fetch("/api/videos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: "Uploaded Video",
+                        description: "Auto-uploaded video",
+                        videoUrl: response.url,
+                        thumbnailUrl: thumbnailUrl || response.thumbnailUrl || "https://source.unsplash.com/random",
+                        controls: true,
+                        fileType: response.fileType,
+                        transformation: {
+                            width: 1080,
+                            height: 1920,
+                        },
+                    }),
+                });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || "Failed to save video.");
+                }
+                const savedVideo = await res.json();
+                // onSuccess(savedVideo);
+            } catch (error: any) {
+                console.error(error);
+                setError(error.message);
+            }
+        })();
+
+        console.log("Successfully Updated the db ");
+
     };
 
     const handleProgress = () => {
@@ -59,11 +98,8 @@ export default function FileUpload({ onSuccess, onProgress, fileType = "image" }
                 setError("Image must be less than 100MB");
                 return false;
             }
-            const validTypes = ["image/jpeg", "image/png", "image/webp"];
-            if (!validTypes.includes(file.type)) {
-                setError("Please Upload a valid file (JPEG , PNG , WEBP)");
-                return false;
-            }
+            const validImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
         }
         return true;
     }
@@ -73,8 +109,8 @@ export default function FileUpload({ onSuccess, onProgress, fileType = "image" }
 
     return (
         <div className="App">
-            <h1>ImageKit Next.js quick start</h1>
-            <p>Upload an image with advanced options</p>
+
+            <p>Upload Your Image / video </p>
             <IKUpload
                 fileName="test-upload.jpg"
                 tags={["sample-tag1", "sample-tag2"]}
@@ -95,18 +131,23 @@ export default function FileUpload({ onSuccess, onProgress, fileType = "image" }
                 onSuccess={handleSuccess}
                 onUploadProgress={handleProgress}
                 onUploadStart={handleStartUpload}
-                transformation={{
-                    pre: "l-text,i-Imagekit,fs-50,l-end",
-                    post: [
-                        {
-                            type: "transformation",
-                            value: "w-100",
-                        },
-                    ],
-                }}
-                style={{ display: 'none' }} // hide the default input and use the custom upload button
+                // transformation={{
+                //     pre: "l-text,i-Imagekit,fs-50,l-end",
+                //     post: [
+                //         {
+                //             type: "transformation",
+                //             value: "w-100",
+                //         },
+                //     ],
+                // }}
+                // hide the default input and use the custom upload button
                 ref={ikUploadRefTest}
             />
+            {error && error !== "null" && (
+                <div className="text-red-500 text-sm mt-2">
+                    {error}
+                </div>
+            )}
 
             {
                 uploading &&
